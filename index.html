@@ -1,12 +1,568 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=
-    , initial-scale=1.0">
-    <title>Document</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Modern Mono Stopwatch with Tasks & Sounds</title>
+<style>
+  :root {
+    --black: #000000;
+    --white: #ffffff;
+    --gray-100: #f8f9fa;
+    --gray-200: #e9ecef;
+    --gray-300: #dee2e6;
+    --gray-400: #ced4da;
+    --gray-500: #adb5bd;
+    --gray-600: #6c757d;
+    --gray-700: #495057;
+    --gray-800: #343a40;
+    --gray-900: #212529;
+  }
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--white);
+    color: var(--black);
+    min-height: 100vh;
+    margin: 0;
+    padding: 20px;
+  }
+  .app-container {
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  h1, h2 {
+    text-align: center;
+  }
+  .stopwatch-display {
+    font-family: monospace;
+    font-size: 3rem;
+    text-align: center;
+    margin: 20px 0;
+    padding: 20px;
+    border: 2px solid var(--gray-300);
+    border-radius: 12px;
+    background: var(--gray-100);
+  }
+  .controls {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-bottom: 30px;
+  }
+  button {
+    padding: 12px 20px;
+    font-weight: 600;
+    border-radius: 8px;
+    border: 2px solid var(--black);
+    background: var(--white);
+    cursor: pointer;
+    transition: background 0.3s ease;
+  }
+  button:hover {
+    background: var(--gray-200);
+  }
+  button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  .task-form {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  input[type="text"], input[type="number"] {
+    padding: 10px;
+    font-size: 1rem;
+    border: 2px solid var(--gray-300);
+    border-radius: 8px;
+  }
+  input[type="text"] {
+    width: 200px;
+  }
+  input[type="number"] {
+    width: 60px;
+    text-align: center;
+  }
+  .tasks-list {
+    border: 2px solid var(--gray-300);
+    border-radius: 12px;
+    max-height: 300px;
+    overflow-y: auto;
+    padding: 15px;
+  }
+  .task-item, .lap-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 5px;
+    border-bottom: 1px solid var(--gray-300);
+  }
+  .task-item.completed {
+    color: var(--gray-600);
+    text-decoration: line-through;
+  }
+  .task-info {
+    flex-grow: 1;
+  }
+  .task-name, .lap-number {
+    font-weight: 600;
+  }
+  .task-time, .lap-time {
+    font-family: monospace;
+    font-size: 0.9rem;
+    color: var(--gray-700);
+  }
+  .task-actions button {
+    margin-left: 10px;
+  }
+  .notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: var(--black);
+    color: var(--white);
+    padding: 15px 25px;
+    border-radius: 12px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+    z-index: 1000;
+  }
+  .notification.show {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .sound-settings {
+    margin-top: 40px;
+    border: 2px solid var(--gray-300);
+    border-radius: 12px;
+    padding: 15px;
+  }
+  .sound-options {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 15px;
+  }
+  .sound-option {
+    cursor: pointer;
+    border: 2px solid var(--gray-300);
+    border-radius: 8px;
+    padding: 10px 15px;
+    user-select: none;
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 90px;
+  }
+  .sound-option.active {
+    border-color: var(--black);
+    background: var(--black);
+    color: var(--white);
+  }
+  .sound-icon {
+    font-size: 1.8rem;
+    margin-bottom: 5px;
+  }
+  .volume-control {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+  }
+  .volume-control input[type="range"] {
+    width: 200px;
+  }
+  .task-progress {
+    background: #ddd; 
+    border-radius: 4px; 
+    height: 6px; 
+    margin-top: 6px;
+  }
+  .progress-fill {
+    height: 100%; 
+    border-radius: 4px;
+    transition: width 0.3s ease;
+  }
+  .action-btn {
+    padding: 6px 10px;
+    font-size: 0.9rem;
+    min-width: 30px;
+  }
+</style>
 </head>
 <body>
-    
+<div class="app-container">
+  <h1>Modern Mono Stopwatch</h1>
+
+  <div class="stopwatch-display" id="timeDisplay">00:00:00.00</div>
+
+  <div class="controls">
+    <button id="startBtn">Start</button>
+    <button id="lapBtn" disabled>Lap</button>
+    <button id="resetBtn" disabled>Reset</button>
+  </div>
+
+  <h2>Lap Times</h2>
+  <div id="lapsContainer" class="tasks-list">
+    <div>No laps recorded yet</div>
+  </div>
+
+  <h2>Task Manager</h2>
+  <form id="taskForm" class="task-form" onsubmit="return false;">
+    <input type="text" id="taskName" placeholder="Task name" required />
+    <input type="number" id="taskHours" min="0" max="23" placeholder="HH" />
+    <input type="number" id="taskMinutes" min="0" max="59" placeholder="MM" />
+    <input type="number" id="taskSeconds" min="0" max="59" placeholder="SS" />
+    <button id="addTaskBtn" type="button">Add Task</button>
+  </form>
+
+  <div id="tasksContainer" class="tasks-list">
+    <div>No tasks added yet</div>
+  </div>
+
+  <div class="sound-settings">
+    <h2>Sound Settings</h2>
+    <div class="sound-options" id="soundOptions">
+      <div class="sound-option active" data-sound="bell">
+        <div class="sound-icon">🔔</div>
+        <div>Bell</div>
+      </div>
+      <div class="sound-option" data-sound="chime">
+        <div class="sound-icon">🎵</div>
+        <div>Chime</div>
+      </div>
+      <div class="sound-option" data-sound="beep">
+        <div class="sound-icon">📢</div>
+        <div>Beep</div>
+      </div>
+      <div class="sound-option" data-sound="gong">
+        <div class="sound-icon">🥁</div>
+        <div>Gong</div>
+      </div>
+    </div>
+    <div class="volume-control">
+      <label for="volumeSlider">Volume:</label>
+      <input type="range" id="volumeSlider" min="0" max="1" step="0.01" value="0.7" />
+      <button id="testSoundBtn">Test Sound</button>
+    </div>
+  </div>
+</div>
+
+<div id="notification" class="notification"></div>
+
+<script>
+  // Elements
+  const timeDisplay = document.getElementById('timeDisplay');
+  const startBtn = document.getElementById('startBtn');
+  const lapBtn = document.getElementById('lapBtn');
+  const resetBtn = document.getElementById('resetBtn');
+  const lapsContainer = document.getElementById('lapsContainer');
+  const taskForm = document.getElementById('taskForm');
+  const taskNameInput = document.getElementById('taskName');
+  const taskHoursInput = document.getElementById('taskHours');
+  const taskMinutesInput = document.getElementById('taskMinutes');
+  const taskSecondsInput = document.getElementById('taskSeconds');
+  const addTaskBtn = document.getElementById('addTaskBtn');
+  const tasksContainer = document.getElementById('tasksContainer');
+  const notification = document.getElementById('notification');
+  const soundOptionsContainer = document.getElementById('soundOptions');
+  const volumeSlider = document.getElementById('volumeSlider');
+  const testSoundBtn = document.getElementById('testSoundBtn');
+
+  // Stopwatch state
+  let startTime = 0;
+  let elapsedTime = 0;
+  let timerInterval = null;
+  let isRunning = false;
+  let laps = [];
+
+  // Tasks state - using in-memory storage for Claude environment
+  let tasks = [];
+
+  // Audio setup with fallback sounds
+  const soundFiles = {
+    bell: createBeepTone(800, 0.2),
+    chime: createBeepTone(1200, 0.3),
+    beep: createBeepTone(600, 0.15),
+    gong: createBeepTone(400, 0.5)
+  };
+  let currentSound = 'bell';
+  let volume = 0.7;
+
+  // Create simple beep tones using Web Audio API
+  function createBeepTone(frequency, duration) {
+    return function() {
+      try {
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        oscillator.frequency.value = frequency;
+        oscillator.type = 'sine';
+        
+        gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+        gainNode.gain.linearRampToValueAtTime(volume * 0.3, audioContext.currentTime + 0.01);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
+        
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + duration);
+      } catch (error) {
+        console.log('Audio not available');
+      }
+    };
+  }
+
+  // Unlock audio on first user interaction
+  let userInteracted = false;
+  function enableAudio() {
+    if (!userInteracted) {
+      userInteracted = true;
+    }
+  }
+
+  // Format milliseconds to HH:MM:SS.ms
+  function formatTime(ms) {
+    const totalSeconds = Math.floor(ms / 1000);
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+    const centiseconds = Math.floor((ms % 1000) / 10);
+    return `${hours.toString().padStart(2,'0')}:${minutes.toString().padStart(2,'0')}:${seconds.toString().padStart(2,'0')}.${centiseconds.toString().padStart(2,'0')}`;
+  }
+
+  // Update stopwatch display and check tasks
+  function updateTime() {
+    elapsedTime = Date.now() - startTime;
+    timeDisplay.textContent = formatTime(elapsedTime);
+    checkTasks();
+    if (tasks.length > 0) {
+      renderTasks(); // Update progress bars
+    }
+  }
+
+  // Start or pause stopwatch
+  function toggleStartPause() {
+    enableAudio();
+    if (!isRunning) {
+      startTime = Date.now() - elapsedTime;
+      timerInterval = setInterval(updateTime, 50);
+      isRunning = true;
+      startBtn.textContent = 'Pause';
+      lapBtn.disabled = false;
+      resetBtn.disabled = false;
+    } else {
+      clearInterval(timerInterval);
+      isRunning = false;
+      startBtn.textContent = 'Resume';
+      lapBtn.disabled = true;
+    }
+  }
+
+  // Reset stopwatch and laps
+  function resetStopwatch() {
+    clearInterval(timerInterval);
+    isRunning = false;
+    elapsedTime = 0;
+    timeDisplay.textContent = '00:00:00.00';
+    startBtn.textContent = 'Start';
+    lapBtn.disabled = true;
+    resetBtn.disabled = true;
+    laps = [];
+    renderLaps();
+    renderTasks();
+  }
+
+  // Record lap
+  function recordLap() {
+    if (!isRunning) return;
+    laps.unshift(elapsedTime);
+    renderLaps();
+  }
+
+  // Render laps
+  function renderLaps() {
+    if (laps.length === 0) {
+      lapsContainer.innerHTML = '<div>No laps recorded yet</div>';
+      return;
+    }
+    lapsContainer.innerHTML = '';
+    laps.forEach((lapTime, i) => {
+      const div = document.createElement('div');
+      div.className = 'lap-item';
+      div.innerHTML = `<span class="lap-number">Lap ${laps.length - i}</span><span class="lap-time">${formatTime(lapTime)}</span>`;
+      lapsContainer.appendChild(div);
+    });
+  }
+
+  // Add new task
+  function addTask() {
+    const name = taskNameInput.value.trim();
+    if (!name) {
+      alert('Please enter a task name');
+      return;
+    }
+    const h = parseInt(taskHoursInput.value) || 0;
+    const m = parseInt(taskMinutesInput.value) || 0;
+    const s = parseInt(taskSecondsInput.value) || 0;
+    const totalMs = (h * 3600 + m * 60 + s) * 1000;
+    if (totalMs <= 0) {
+      alert('Please enter a valid time for the task');
+      return;
+    }
+    tasks.push({
+      id: Date.now(),
+      name,
+      targetTime: totalMs,
+      completed: false
+    });
+    renderTasks();
+    taskForm.reset();
+  }
+
+  // Render tasks
+  function renderTasks() {
+    if (tasks.length === 0) {
+      tasksContainer.innerHTML = '<div>No tasks added yet</div>';
+      return;
+    }
+    tasksContainer.innerHTML = '';
+    tasks.forEach(task => {
+      const div = document.createElement('div');
+      div.className = 'task-item' + (task.completed ? ' completed' : '');
+      const progressPercent = Math.min((elapsedTime / task.targetTime) * 100, 100);
+      const progressColor = task.completed ? '#28a745' : '#000';
+      div.innerHTML = `
+        <div class="task-info">
+          <div class="task-name">${task.name}</div>
+          <div class="task-time">Target: ${formatTime(task.targetTime)}</div>
+          <div class="task-progress">
+            <div class="progress-fill" style="width:${progressPercent}%; background:${progressColor};"></div>
+          </div>
+        </div>
+        <div class="task-actions">
+          ${!task.completed ? `<button class="action-btn complete-btn" onclick="completeTask(${task.id})">✓</button>` : ''}
+          <button class="action-btn" onclick="deleteTask(${task.id})">✕</button>
+        </div>
+      `;
+      tasksContainer.appendChild(div);
+    });
+  }
+
+  // Mark task completed manually
+  function completeTask(id) {
+    const task = tasks.find(t => t.id === id);
+    if (task && !task.completed) {
+      task.completed = true;
+      playSound();
+      showNotification(`Task "${task.name}" manually completed!`);
+      renderTasks();
+    }
+  }
+
+  // Delete task
+  function deleteTask(id) {
+    tasks = tasks.filter(t => t.id !== id);
+    renderTasks();
+  }
+
+  // Check tasks for completion
+  function checkTasks() {
+    let updated = false;
+    tasks.forEach(task => {
+      if (!task.completed && elapsedTime >= task.targetTime) {
+        task.completed = true;
+        playSound();
+        showNotification(`Task "${task.name}" completed!`);
+        updated = true;
+      }
+    });
+    if (updated) {
+      renderTasks();
+    }
+  }
+
+  // Play sound with user interaction check
+  function playSound() {
+    if (userInteracted && soundFiles[currentSound]) {
+      soundFiles[currentSound]();
+    }
+  }
+
+  // Show notification
+  let notifTimeout;
+  function showNotification(msg) {
+    notification.textContent = msg;
+    notification.classList.add('show');
+    clearTimeout(notifTimeout);
+    notifTimeout = setTimeout(() => {
+      notification.classList.remove('show');
+    }, 3000);
+  }
+
+  // Sound option selection
+  soundOptionsContainer.querySelectorAll('.sound-option').forEach(option => {
+    option.addEventListener('click', () => {
+      soundOptionsContainer.querySelectorAll('.sound-option').forEach(o => o.classList.remove('active'));
+      option.classList.add('active');
+      currentSound = option.dataset.sound;
+      enableAudio();
+      playSound();
+    });
+  });
+
+  // Volume control
+  volumeSlider.value = volume;
+  volumeSlider.addEventListener('input', () => {
+    volume = parseFloat(volumeSlider.value);
+  });
+
+  // Test sound button
+  testSoundBtn.addEventListener('click', () => {
+    enableAudio();
+    playSound();
+  });
+
+  // Event listeners
+  startBtn.addEventListener('click', () => {
+    enableAudio();
+    toggleStartPause();
+  });
+  lapBtn.addEventListener('click', recordLap);
+  resetBtn.addEventListener('click', resetStopwatch);
+  addTaskBtn.addEventListener('click', addTask);
+
+  // Enter key to add task
+  taskNameInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+      addTask();
+    }
+  });
+
+  // Enter key on time inputs
+  [taskHoursInput, taskMinutesInput, taskSecondsInput].forEach(input => {
+    input.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        addTask();
+      }
+    });
+  });
+
+  // Initialize display
+  renderTasks();
+  renderLaps();
+
+  // Make functions global for onclick handlers
+  window.completeTask = completeTask;
+  window.deleteTask = deleteTask;
+</script>
 </body>
 </html>
