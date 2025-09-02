@@ -4,10 +4,16 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Modern Mono Stopwatch with Tasks & Sounds</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
 <style>
   :root {
-    --black: #000000;
-    --white: #ffffff;
+    --primary: #4f8cff;
+    --primary-dark: #2b5db6;
+    --accent: #ffb347;
+    --accent-dark: #ff9800;
+    --bg: #f6f8fa;
+    --white: #fff;
+    --black: #181a1b;
     --gray-100: #f8f9fa;
     --gray-200: #e9ecef;
     --gray-300: #dee2e6;
@@ -17,80 +23,180 @@
     --gray-700: #495057;
     --gray-800: #343a40;
     --gray-900: #212529;
+    --shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+    --radius: 18px;
+    --mono: 'JetBrains Mono', 'Fira Mono', 'Consolas', monospace;
+    --transition: 0.25s cubic-bezier(.4,0,.2,1);
   }
   body {
     font-family: 'Inter', sans-serif;
-    background: var(--white);
+    background: var(--bg);
     color: var(--black);
     min-height: 100vh;
     margin: 0;
-    padding: 20px;
+    padding: 0;
   }
   .app-container {
-    max-width: 900px;
-    margin: 0 auto;
+    max-width: 480px;
+    margin: 40px auto 0 auto;
+    background: var(--white);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 32px 20px 24px 20px;
+    position: relative;
   }
-  h1, h2 {
+  h1 {
+    font-family: var(--mono);
+    font-size: 2.2rem;
+    font-weight: 700;
+    letter-spacing: -1px;
+    color: var(--primary-dark);
+    margin-bottom: 16px;
     text-align: center;
+  }
+  h2 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--primary-dark);
+    margin: 32px 0 12px 0;
+    text-align: left;
+    letter-spacing: 0.5px;
   }
   .stopwatch-display {
-    font-family: monospace;
-    font-size: 3rem;
+    background: linear-gradient(120deg, var(--primary) 60%, var(--accent-dark) 100%);
+    color: var(--white);
+    font-family: var(--mono);
+    font-size: 3.2rem;
     text-align: center;
-    margin: 20px 0;
-    padding: 20px;
-    border: 2px solid var(--gray-300);
-    border-radius: 12px;
-    background: var(--gray-100);
+    margin: 0 auto 18px auto;
+    padding: 32px 0 18px 0;
+    border-radius: 32px 32px 18px 18px;
+    box-shadow: 0 4px 24px 0 rgba(79,140,255,0.10);
+    position: relative;
+    overflow: hidden;
+    border: none;
+    transition: box-shadow var(--transition), background var(--transition);
+  }
+  .stopwatch-display.animated {
+    animation: pulse 1s infinite;
+    box-shadow: 0 0 0 0 rgba(79,140,255,0.18);
+  }
+  @keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(79,140,255,0.18);}
+    70% { box-shadow: 0 0 0 16px rgba(255,179,71,0.07);}
+    100% { box-shadow: 0 0 0 0 rgba(79,140,255,0.18);}
+  }
+  .stopwatch-time {
+    display: inline-block;
+    opacity: 1;
+    transition: opacity 0.25s var(--transition);
+    will-change: opacity;
+    letter-spacing: 2px;
+    font-size: 3.2rem;
+    font-family: var(--mono);
+    font-weight: 700;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  }
+  .stopwatch-time.fade-out {
+    opacity: 0;
+  }
+  .stopwatch-time.fade-in {
+    opacity: 1;
   }
   .controls {
     display: flex;
     justify-content: center;
-    gap: 15px;
-    margin-bottom: 30px;
+    gap: 18px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
   }
-  button {
-    padding: 12px 20px;
-    font-weight: 600;
-    border-radius: 8px;
-    border: 2px solid var(--black);
-    background: var(--white);
+  .controls button {
+    padding: 12px 28px;
+    font-weight: 700;
+    font-size: 1.1rem;
+    border-radius: 12px;
+    border: none;
+    background: var(--primary);
+    color: var(--white);
     cursor: pointer;
-    transition: background 0.3s ease;
+    box-shadow: 0 2px 8px 0 rgba(79,140,255,0.08);
+    transition: background var(--transition), transform 0.18s;
+    outline: none;
   }
-  button:hover {
-    background: var(--gray-200);
+  .controls button:active {
+    transform: scale(0.97);
   }
-  button:disabled {
+  .controls button:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+    background: var(--gray-400);
+  }
+  .controls button#resetBtn {
+    background: var(--accent-dark);
+  }
+  .controls button#lapBtn {
+    background: var(--primary-dark);
+  }
+  .lap-section {
+    background: var(--gray-100);
+    border-radius: 12px;
+    padding: 10px 12px;
+    margin-bottom: 10px;
+    box-shadow: 0 2px 8px 0 rgba(31,38,135,0.03);
+  }
+  .tasks-list {
+    border-radius: 12px;
+    max-height: 220px;
+    overflow-y: auto;
+    padding: 0;
+    background: var(--gray-100);
+    margin-bottom: 0;
+    box-shadow: 0 2px 8px 0 rgba(31,38,135,0.03);
   }
   .task-form {
     display: flex;
-    gap: 10px;
-    margin-bottom: 20px;
+    gap: 8px;
+    margin-bottom: 18px;
     justify-content: center;
     flex-wrap: wrap;
+    background: var(--gray-100);
+    border-radius: 12px;
+    padding: 10px 8px;
+    box-shadow: 0 2px 8px 0 rgba(31,38,135,0.03);
   }
-  input[type="text"], input[type="number"] {
-    padding: 10px;
+  .task-form input[type="text"], .task-form input[type="number"] {
+    padding: 10px 8px;
     font-size: 1rem;
-    border: 2px solid var(--gray-300);
+    border: 1.5px solid var(--gray-300);
     border-radius: 8px;
+    background: var(--white);
+    font-family: inherit;
+    transition: border-color 0.2s;
   }
-  input[type="text"] {
-    width: 200px;
+  .task-form input[type="text"]:focus, .task-form input[type="number"]:focus {
+    border-color: var(--primary);
+    outline: none;
   }
-  input[type="number"] {
-    width: 60px;
+  .task-form input[type="text"] {
+    width: 140px;
+  }
+  .task-form input[type="number"] {
+    width: 48px;
     text-align: center;
   }
-  .tasks-list {
-    border: 2px solid var(--gray-300);
-    border-radius: 12px;
-    max-height: 300px;
-    overflow-y: auto;
-    padding: 15px;
+  .task-form button {
+    padding: 10px 18px;
+    font-weight: 600;
+    border-radius: 8px;
+    border: none;
+    background: var(--accent-dark);
+    color: var(--white);
+    cursor: pointer;
+    transition: background var(--transition);
+    font-size: 1rem;
+  }
+  .task-form button:active {
+    background: var(--accent);
   }
   .task-item, .lap-item {
     display: flex;
@@ -98,48 +204,101 @@
     align-items: center;
     padding: 10px 5px;
     border-bottom: 1px solid var(--gray-300);
+    font-size: 1rem;
+  }
+  .task-item:last-child, .lap-item:last-child {
+    border-bottom: none;
   }
   .task-item.completed {
     color: var(--gray-600);
     text-decoration: line-through;
+    background: #e6f7e6;
   }
   .task-info {
     flex-grow: 1;
+    min-width: 0;
   }
   .task-name, .lap-number {
     font-weight: 600;
+    font-size: 1.05rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   .task-time, .lap-time {
-    font-family: monospace;
-    font-size: 0.9rem;
+    font-family: var(--mono);
+    font-size: 0.92rem;
     color: var(--gray-700);
+    margin-left: 8px;
+  }
+  .task-progress {
+    background: #ddd; 
+    border-radius: 4px; 
+    height: 6px; 
+    margin-top: 6px;
+    width: 100%;
+  }
+  .progress-fill {
+    height: 100%; 
+    border-radius: 4px;
+    transition: width 0.3s var(--transition);
   }
   .task-actions button {
-    margin-left: 10px;
+    margin-left: 8px;
+    padding: 5px 10px;
+    font-size: 1rem;
+    border-radius: 6px;
+    border: none;
+    background: var(--primary-dark);
+    color: var(--white);
+    cursor: pointer;
+    transition: background var(--transition);
+  }
+  .task-actions button:active {
+    background: var(--primary);
+  }
+  .task-actions button:last-child {
+    background: var(--accent-dark);
+  }
+  .task-actions button:last-child:active {
+    background: var(--accent);
+  }
+  .task-actions .complete-btn {
+    background: #28a745;
+  }
+  .task-actions .complete-btn:active {
+    background: #218838;
+  }
+  .task-actions .recontinue-btn {
+    background: #ffb347;
+    color: var(--black);
   }
   .notification {
     position: fixed;
     top: 20px;
     right: 20px;
-    background: var(--black);
+    background: var(--primary-dark);
     color: var(--white);
     padding: 15px 25px;
     border-radius: 12px;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.13);
     opacity: 0;
     pointer-events: none;
-    transition: opacity 0.3s ease;
+    transition: opacity 0.3s var(--transition);
     z-index: 1000;
+    font-size: 1.1rem;
+    font-weight: 600;
   }
   .notification.show {
     opacity: 1;
     pointer-events: auto;
   }
   .sound-settings {
-    margin-top: 40px;
-    border: 2px solid var(--gray-300);
+    margin-top: 32px;
     border-radius: 12px;
-    padding: 15px;
+    padding: 15px 10px 10px 10px;
+    background: var(--gray-100);
+    box-shadow: 0 2px 8px 0 rgba(31,38,135,0.03);
   }
   .sound-options {
     display: flex;
@@ -154,15 +313,17 @@
     border-radius: 8px;
     padding: 10px 15px;
     user-select: none;
-    transition: all 0.3s ease;
+    transition: all 0.3s var(--transition);
     display: flex;
     flex-direction: column;
     align-items: center;
-    min-width: 90px;
+    min-width: 70px;
+    font-size: 1rem;
+    background: var(--white);
   }
   .sound-option.active {
-    border-color: var(--black);
-    background: var(--black);
+    border-color: var(--primary-dark);
+    background: var(--primary-dark);
     color: var(--white);
   }
   .sound-icon {
@@ -174,33 +335,67 @@
     align-items: center;
     justify-content: center;
     gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 0;
   }
   .volume-control input[type="range"] {
-    width: 200px;
+    width: 120px;
   }
-  .task-progress {
-    background: #ddd; 
-    border-radius: 4px; 
-    height: 6px; 
-    margin-top: 6px;
+  /* Responsive Styles */
+  @media (max-width: 600px) {
+    .app-container {
+      max-width: 100%;
+      margin: 0;
+      border-radius: 0;
+      padding: 16px 2vw 16px 2vw;
+    }
+    .stopwatch-display {
+      font-size: 2rem;
+      padding: 18px 0 10px 0;
+      border-radius: 18px 18px 12px 12px;
+    }
+    .stopwatch-time {
+      font-size: 2rem;
+    }
+    .task-form input[type="text"] {
+      width: 100px;
+    }
+    .task-form input[type="number"] {
+      width: 36px;
+    }
   }
-  .progress-fill {
-    height: 100%; 
-    border-radius: 4px;
-    transition: width 0.3s ease;
-  }
-  .action-btn {
-    padding: 6px 10px;
-    font-size: 0.9rem;
-    min-width: 30px;
+  @media (max-width: 400px) {
+    .stopwatch-display {
+      font-size: 1.1rem;
+      padding: 8px 0 4px 0;
+    }
+    .stopwatch-time {
+      font-size: 1.1rem;
+    }
+    .task-form input[type="text"] {
+      width: 70px;
+    }
+    .task-form input[type="number"] {
+      width: 24px;
+    }
+    .sound-option {
+      min-width: 40px;
+      font-size: 0.85rem;
+      padding: 5px 2px;
+    }
+    .sound-icon {
+      font-size: 1.1rem;
+    }
   }
 </style>
 </head>
 <body>
 <div class="app-container">
-  <h1>Modern Mono Stopwatch</h1>
+  <h1>Mono Stopwatch</h1>
 
-  <div class="stopwatch-display" id="timeDisplay">00:00:00.00</div>
+  <div class="stopwatch-display" id="timeDisplay">
+    <span class="stopwatch-time" id="stopwatchTime">00:00:00.00</span>
+  </div>
 
   <div class="controls">
     <button id="startBtn">Start</button>
@@ -209,8 +404,10 @@
   </div>
 
   <h2>Lap Times</h2>
-  <div id="lapsContainer" class="tasks-list">
-    <div>No laps recorded yet</div>
+  <div class="lap-section">
+    <div id="lapsContainer" class="tasks-list" style="margin-bottom:0;">
+      <div style="color:#888;">No laps recorded yet</div>
+    </div>
   </div>
 
   <h2>Task Manager</h2>
@@ -223,11 +420,11 @@
   </form>
 
   <div id="tasksContainer" class="tasks-list">
-    <div>No tasks added yet</div>
+    <div style="color:#888;">No tasks added yet</div>
   </div>
 
   <div class="sound-settings">
-    <h2>Sound Settings</h2>
+    <h2 style="margin-top:0;">Sound Settings</h2>
     <div class="sound-options" id="soundOptions">
       <div class="sound-option active" data-sound="bell">
         <div class="sound-icon">🔔</div>
@@ -249,7 +446,7 @@
     <div class="volume-control">
       <label for="volumeSlider">Volume:</label>
       <input type="range" id="volumeSlider" min="0" max="1" step="0.01" value="0.7" />
-      <button id="testSoundBtn">Test Sound</button>
+      <button id="testSoundBtn" type="button">Test Sound</button>
     </div>
   </div>
 </div>
@@ -259,6 +456,7 @@
 <script>
   // Elements
   const timeDisplay = document.getElementById('timeDisplay');
+  const stopwatchTime = document.getElementById('stopwatchTime');
   const startBtn = document.getElementById('startBtn');
   const lapBtn = document.getElementById('lapBtn');
   const resetBtn = document.getElementById('resetBtn');
@@ -282,7 +480,7 @@
   let isRunning = false;
   let laps = [];
 
-  // Tasks state - using in-memory storage for Claude environment
+  // Tasks state
   let tasks = [];
 
   // Audio setup with fallback sounds
@@ -302,22 +500,16 @@
         const audioContext = new (window.AudioContext || window.webkitAudioContext)();
         const oscillator = audioContext.createOscillator();
         const gainNode = audioContext.createGain();
-        
         oscillator.connect(gainNode);
         gainNode.connect(audioContext.destination);
-        
         oscillator.frequency.value = frequency;
         oscillator.type = 'sine';
-        
         gainNode.gain.setValueAtTime(0, audioContext.currentTime);
         gainNode.gain.linearRampToValueAtTime(volume * 0.3, audioContext.currentTime + 0.01);
         gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
-        
         oscillator.start(audioContext.currentTime);
         oscillator.stop(audioContext.currentTime + duration);
-      } catch (error) {
-        console.log('Audio not available');
-      }
+      } catch (error) {}
     };
   }
 
@@ -339,13 +531,28 @@
     return `${hours.toString().padStart(2,'0')}:${minutes.toString().padStart(2,'0')}:${seconds.toString().padStart(2,'0')}.${centiseconds.toString().padStart(2,'0')}`;
   }
 
+  // Fade in/out animation for stopwatch time
+  function updateStopwatchTimeDisplay(newTimeString) {
+    if (stopwatchTime.textContent === newTimeString) return;
+    stopwatchTime.classList.add('fade-out');
+    setTimeout(() => {
+      stopwatchTime.textContent = newTimeString;
+      stopwatchTime.classList.remove('fade-out');
+      stopwatchTime.classList.add('fade-in');
+      setTimeout(() => {
+        stopwatchTime.classList.remove('fade-in');
+      }, 200);
+    }, 200);
+  }
+
   // Update stopwatch display and check tasks
   function updateTime() {
     elapsedTime = Date.now() - startTime;
-    timeDisplay.textContent = formatTime(elapsedTime);
+    const formatted = formatTime(elapsedTime);
+    updateStopwatchTimeDisplay(formatted);
     checkTasks();
     if (tasks.length > 0) {
-      renderTasks(); // Update progress bars
+      renderTasks();
     }
   }
 
@@ -353,17 +560,26 @@
   function toggleStartPause() {
     enableAudio();
     if (!isRunning) {
+      tasks.forEach(task => {
+        if (task.completed && task.autoCompleted) {
+          task.completed = false;
+          task.autoCompleted = false;
+        }
+      });
+      renderTasks();
       startTime = Date.now() - elapsedTime;
       timerInterval = setInterval(updateTime, 50);
       isRunning = true;
       startBtn.textContent = 'Pause';
       lapBtn.disabled = false;
       resetBtn.disabled = false;
+      timeDisplay.classList.add('animated');
     } else {
       clearInterval(timerInterval);
       isRunning = false;
       startBtn.textContent = 'Resume';
       lapBtn.disabled = true;
+      timeDisplay.classList.remove('animated');
     }
   }
 
@@ -372,13 +588,20 @@
     clearInterval(timerInterval);
     isRunning = false;
     elapsedTime = 0;
-    timeDisplay.textContent = '00:00:00.00';
+    updateStopwatchTimeDisplay('00:00:00.00');
     startBtn.textContent = 'Start';
     lapBtn.disabled = true;
     resetBtn.disabled = true;
     laps = [];
+    tasks.forEach(task => {
+      if (task.completed && task.autoCompleted) {
+        task.completed = false;
+        task.autoCompleted = false;
+      }
+    });
     renderLaps();
     renderTasks();
+    timeDisplay.classList.remove('animated');
   }
 
   // Record lap
@@ -391,7 +614,7 @@
   // Render laps
   function renderLaps() {
     if (laps.length === 0) {
-      lapsContainer.innerHTML = '<div>No laps recorded yet</div>';
+      lapsContainer.innerHTML = '<div style="color:#888;">No laps recorded yet</div>';
       return;
     }
     lapsContainer.innerHTML = '';
@@ -422,7 +645,8 @@
       id: Date.now(),
       name,
       targetTime: totalMs,
-      completed: false
+      completed: false,
+      autoCompleted: false
     });
     renderTasks();
     taskForm.reset();
@@ -431,15 +655,15 @@
   // Render tasks
   function renderTasks() {
     if (tasks.length === 0) {
-      tasksContainer.innerHTML = '<div>No tasks added yet</div>';
+      tasksContainer.innerHTML = '<div style="color:#888;">No tasks added yet</div>';
       return;
     }
     tasksContainer.innerHTML = '';
     tasks.forEach(task => {
+      const progressPercent = Math.min((elapsedTime / task.targetTime) * 100, 100);
+      const progressColor = task.completed ? '#28a745' : '#4f8cff';
       const div = document.createElement('div');
       div.className = 'task-item' + (task.completed ? ' completed' : '');
-      const progressPercent = Math.min((elapsedTime / task.targetTime) * 100, 100);
-      const progressColor = task.completed ? '#28a745' : '#000';
       div.innerHTML = `
         <div class="task-info">
           <div class="task-name">${task.name}</div>
@@ -451,6 +675,7 @@
         <div class="task-actions">
           ${!task.completed ? `<button class="action-btn complete-btn" onclick="completeTask(${task.id})">✓</button>` : ''}
           <button class="action-btn" onclick="deleteTask(${task.id})">✕</button>
+          ${task.completed && task.autoCompleted ? `<button class="action-btn recontinue-btn" onclick="recontinueTask(${task.id})">⟳</button>` : ''}
         </div>
       `;
       tasksContainer.appendChild(div);
@@ -462,6 +687,7 @@
     const task = tasks.find(t => t.id === id);
     if (task && !task.completed) {
       task.completed = true;
+      task.autoCompleted = false;
       playSound();
       showNotification(`Task "${task.name}" manually completed!`);
       renderTasks();
@@ -474,12 +700,24 @@
     renderTasks();
   }
 
+  // Recontinue a completed task (reset its completion)
+  function recontinueTask(id) {
+    const task = tasks.find(t => t.id === id);
+    if (task && task.completed && task.autoCompleted) {
+      task.completed = false;
+      task.autoCompleted = false;
+      showNotification(`Task "${task.name}" is active again!`);
+      renderTasks();
+    }
+  }
+
   // Check tasks for completion
   function checkTasks() {
     let updated = false;
     tasks.forEach(task => {
       if (!task.completed && elapsedTime >= task.targetTime) {
         task.completed = true;
+        task.autoCompleted = true;
         playSound();
         showNotification(`Task "${task.name}" completed!`);
         updated = true;
@@ -563,6 +801,7 @@
   // Make functions global for onclick handlers
   window.completeTask = completeTask;
   window.deleteTask = deleteTask;
+  window.recontinueTask = recontinueTask;
 </script>
 </body>
 </html>
